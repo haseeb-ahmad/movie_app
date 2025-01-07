@@ -24,7 +24,7 @@ class Api::V1::MoviesController < ApplicationController
 
   # POST /api/v1/movies
   def create
-debugger
+
     @movie = Movie.new(movie_params)
     if @movie.save
       render json: @movie, serializer: MovieSerializer, status: :created, message: 'Movie uploaded successfully!'
@@ -57,7 +57,7 @@ debugger
   end
 
   def movie_params
-    debugger
+    
     params.require(:movie).permit(:title, :publishing_year, :video)
   end
 end

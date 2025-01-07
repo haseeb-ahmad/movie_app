@@ -23,7 +23,7 @@ class Movie < ApplicationRecord
   end
 
   def poster_size
-    debugger
+    
     if poster.attached? && poster.byte_size > 5.megabytes
       errors.add(:poster, 'is too big. Maximum size is 5MB.')
     end

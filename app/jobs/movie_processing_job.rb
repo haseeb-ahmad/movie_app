@@ -3,7 +3,7 @@ class MovieProcessingJob < ApplicationJob
   queue_as :default
 
   def perform(movie_id)
-    debugger
+    
     movie = Movie.find(movie_id)
     return unless movie.video.attached?
 
