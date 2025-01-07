@@ -12,8 +12,8 @@ class Api::V1::MoviesControllerTest < ActionDispatch::IntegrationTest
   test "should get index" do
     get api_v1_movies_url, as: :json
     assert_response :success
-    body = JSON.parse(response.body)
-    assert_not_nil body
+    json_response = JSON.parse(response.body)
+    assert_not_nil json_response
   end
 
   test "should show movie" do
@@ -38,5 +38,21 @@ class Api::V1::MoviesControllerTest < ActionDispatch::IntegrationTest
       delete api_v1_movie_url(@movie), as: :json
     end
     assert_response :ok
+  end
+
+  test "should not create movie without title" do
+    post api_v1_movies_url, params: { movie: { publishing_year: 2021 } }, as: :json
+    assert_response :unprocessable_entity
+  end
+
+  test "should not create movie without publishing year" do
+    post api_v1_movies_url, params: { movie: { title: 'New Movie' } }, as: :json
+    assert_response :unprocessable_entity
+  end
+
+  test "should not access movies without authentication" do
+    sign_out @user
+    get api_v1_movies_url, as: :json
+    assert_response :unauthorized
   end
 end

@@ -17,6 +17,21 @@ class Api::V1::SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unauthorized
   end
 
+  test "should not sign in user with invalid email format" do
+    post user_session_url, params: { user: { email: 'invalidemail', password: 'password' } }, as: :json
+    assert_response :unauthorized
+  end
+
+  test "should not sign in user with missing email" do
+    post user_session_url, params: { user: { password: 'password' } }, as: :json
+    assert_response :unauthorized
+  end
+
+  test "should not sign in user with missing password" do
+    post user_session_url, params: { user: { email: @user.email } }, as: :json
+    assert_response :unauthorized
+  end
+
   test "should sign out user" do
     delete destroy_user_session_url, as: :json
     assert_response :no_content

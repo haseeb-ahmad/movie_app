@@ -2,7 +2,7 @@
 class Api::V1::MoviesController < ApplicationController
   include Paginate
 
-  # before_action :authenticate_user!
+  before_action :authenticate_user!
   before_action :find_movie, only: [:show, :update, :destroy]
 
   # GET /api/v1/movies
