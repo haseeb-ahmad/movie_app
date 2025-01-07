@@ -1,9 +1,31 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  title: MyString
-  publishing_year: 1
+  title: Inception
+  publishing_year: 2010
+  created_at: <%= Time.now %>
+  updated_at: <%= Time.now %>
 
 two:
-  title: MyString
-  publishing_year: 1
+  title: The Matrix
+  publishing_year: 1999
+  created_at: <%= Time.now %>
+  updated_at: <%= Time.now %>
+
+three:
+  title: Interstellar
+  publishing_year: 2014
+  created_at: <%= Time.now %>
+  updated_at: <%= Time.now %>
+
+four:
+  title: The Dark Knight
+  publishing_year: 2008
+  created_at: <%= Time.now %>
+  updated_at: <%= Time.now %>
+
+five:
+  title: Fight Club
+  publishing_year: 1999
+  created_at: <%= Time.now %>
+  updated_at: <%= Time.now %>
