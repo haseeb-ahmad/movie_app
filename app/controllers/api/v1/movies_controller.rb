@@ -24,10 +24,21 @@ class Api::V1::MoviesController < ApplicationController
 
   # POST /api/v1/movies
   def create
-
-    @movie = Movie.new(movie_params)
+    @movie = Movie.new(movie_params.except(:video))
+  
     if @movie.save
-      render json: @movie, serializer: MovieSerializer, status: :created, message: 'Movie uploaded successfully!'
+      # Pass file metadata to the background job
+      debugger
+      file = movie_params[:video]
+      file_path = file.tempfile.path
+      file_metadata = { filename: file.original_filename, content_type: file.content_type }
+  
+      MovieProcessingJob.perform_later(@movie.id, file_path, file_metadata)
+  
+      render json: {
+        movie: MovieSerializer.new(@movie),
+        message: 'Movie uploaded successfully and is being processed!'
+      }, status: :created
     else
       render json: { errors: @movie.errors.full_messages }, status: :unprocessable_entity
     end
@@ -57,7 +68,6 @@ class Api::V1::MoviesController < ApplicationController
   end
 
   def movie_params
-    
     params.require(:movie).permit(:title, :publishing_year, :video)
   end
 end

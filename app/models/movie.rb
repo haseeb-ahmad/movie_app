@@ -8,8 +8,6 @@ class Movie < ApplicationRecord
 
   enum :status, [ :pending, :processing, :processed, :failed ]
 
-  # Attach video and trigger background processing after video is uploaded
-  after_create :enqueue_video_processing, if: :video_attached?
   
 
   private
@@ -18,12 +16,7 @@ class Movie < ApplicationRecord
     video.attached?
   end
 
-  def enqueue_video_processing
-    MovieProcessingJob.perform_later(self.id)
-  end
-
   def poster_size
-    
     if poster.attached? && poster.byte_size > 5.megabytes
       errors.add(:poster, 'is too big. Maximum size is 5MB.')
     end
