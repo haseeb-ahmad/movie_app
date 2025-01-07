@@ -2,9 +2,12 @@
 class MovieProcessingJob < ApplicationJob
   queue_as :default
 
-  def perform(movie_id)
-    
+  def perform(movie_id, file_path, file_metadata)
     movie = Movie.find(movie_id)
+
+    # Attach the video using the provided file metadata
+    attach_video(movie, file_path, file_metadata)
+
     return unless movie.video.attached?
 
     # Update movie status to "processing"
@@ -12,55 +15,53 @@ class MovieProcessingJob < ApplicationJob
 
     begin
       process_video(movie)
-      movie.update(status: :processed)  # Update to "processed" when finished
+      movie.update(status: :processed) # Update status to "processed" when successful
     rescue => e
-      movie.update(status: :failed)  # Update to "failed" if there's an error
-      # MovieChannel.broadcast_to(movie, { status: movie.status, movie_id: movie.id })
+      movie.update(status: :failed) # Update status to "failed" on error
       Rails.logger.error("Error processing video for movie #{movie.id}: #{e.message}")
     end
   end
 
   private
 
-  
-  
+  def attach_video(movie, file_path, file_metadata)
+    return unless file_path.present?
+
+    # Attach the file using Active Storage
+    movie.video.attach(
+      io: File.open(file_path),
+      filename: file_metadata[:filename] || "video_#{Time.now.to_i}",
+      content_type: file_metadata[:content_type]
+    )
+  end
+
   def process_video(movie)
-    # Download video file to memory (use temporary file if you want to store on disk)
     video = movie.video
-  
-    # Check if video is attached
+
     if video.attached?
-      # Download the video content into memory (returns an IO object)
+      # Download the video content into memory
       video_file = video.download
-  
-      # Create a temporary file to store the poster image
-      poster_path = Rails.root.join('tmp', "#{movie.id}_poster.jpg").to_s # Convert to string
-  
-      # Use Tempfile to handle the video file as binary data
+
+      # Create a temporary file for the poster image
+      poster_path = Rails.root.join('tmp', "#{movie.id}_poster.jpg").to_s
+
       Tempfile.create(['video', '.mp4']) do |tmp_video|
-        # Write the video binary data to the temporary file
-        tmp_video.binmode  # Ensure that it's treated as binary
-        tmp_video.write(video_file) # Write the downloaded content to the temp file
-        tmp_video.rewind # Rewind the file to the beginning for FFMpeg
-  
-        # Use FFMpeg to extract the poster image
-        movie_video = FFMPEG::Movie.new(tmp_video.path) # Make sure tmp_video.path is a string
+        tmp_video.binmode
+        tmp_video.write(video_file)
+        tmp_video.rewind
+
+        # Use FFmpeg to extract the poster image
+        movie_video = FFMPEG::Movie.new(tmp_video.path)
         movie_video.screenshot(poster_path, seek_time: 5, resolution: '640x360')
-  
-        # Attach the poster to the movie record
+
+        # Attach the poster to the movie
         movie.poster.attach(io: File.open(poster_path), filename: "#{movie.id}_poster.jpg", content_type: 'image/jpeg')
-  
-        # Optionally clean up the temporary poster file
+
+        # Clean up the temporary poster file
         File.delete(poster_path) if File.exist?(poster_path)
       end
-  
-      # Broadcast the status of the movie processing (via ActionCable)
-      # MovieChannel.broadcast_to(movie, { status: movie.status, movie_id: movie.id })
-  
     else
       Rails.logger.error "No video file attached to movie #{movie.id}"
     end
   end
-  
-   
 end
