@@ -1,5 +1,5 @@
 class ApplicationController < ActionController::API
-    include Authentication
+  include Authentication
 
-    before_action :authenticate_user
+  before_action :authenticate_user
 end
