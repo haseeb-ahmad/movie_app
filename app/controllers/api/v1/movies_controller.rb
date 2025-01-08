@@ -2,7 +2,6 @@
 class Api::V1::MoviesController < ApplicationController
   include Paginate
 
-  before_action :authenticate_user!
   before_action :find_movie, only: [:show, :update, :destroy]
 
   # GET /api/v1/movies
@@ -28,7 +27,6 @@ class Api::V1::MoviesController < ApplicationController
   
     if @movie.save
       # Pass file metadata to the background job
-      debugger
       file = movie_params[:video]
       file_path = file.tempfile.path
       file_metadata = { filename: file.original_filename, content_type: file.content_type }
