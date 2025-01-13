@@ -6,7 +6,7 @@ class Api::V1::MoviesController < ApplicationController
 
   # GET /api/v1/movies
   def index
-    movies = paginate(Movie.all)
+    movies = paginate(Movie.all.order(created_at: :desc))
     render json: movies, each_serializer: MovieSerializer, meta: {
       total_pages: movies.total_pages,
       total_count: movies.total_count,
@@ -44,8 +44,20 @@ class Api::V1::MoviesController < ApplicationController
 
   # PUT /api/v1/movies/:id
   def update
-    if @movie.update(movie_params)
-      render json: { movie: @movie, message: 'Movie updated successfully!' }, status: :ok
+    if @movie.update(movie_params.except(:video))
+
+      if movie_params[:video].present?
+        file = movie_params[:video]
+        file_path = file.tempfile.path
+        file_metadata = { filename: file.original_filename, content_type: file.content_type }
+    
+        MovieProcessingJob.perform_later(@movie.id, file_path, file_metadata) 
+      end
+  
+      render json: {
+        movie: MovieSerializer.new(@movie),
+        message: 'Movie updated successfully and video is being processed!'
+      }, status: :ok
     else
       render json: { errors: @movie.errors.full_messages }, status: :unprocessable_entity
     end
